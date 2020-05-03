@@ -1,0 +1,69 @@
+# This code is licensed from CircleCI to the user under the MIT license. See
+# https://circleci.com/orbs/registry/licensing for details.
+version: 2.1
+
+description: Terraform orb.
+
+orbs:
+  terraform: ovotech/terraform@1.6.6
+  aws-ecr: circleci/aws-ecr@6.8.2
+
+executors:
+  terraform-0_12:
+    description: "Terraform 0.12 executor"
+    docker:
+      - image: ovotech/terraform:0.12
+jobs:
+  build:
+    executor: terraform-0_12
+    steps:
+         - checkout
+         - run:
+            name: CD to env
+            command: |
+              pwd
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+              ls -latrh
+              aws --version
+              
+  deploy:
+    executor: terraform-0_12
+    steps:
+         - checkout
+         - run:
+            name: CD 
+            command: |
+              curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/aws-iam-authenticator
+              chmod 777 ./aws-iam-authenticator
+              mkdir -p $HOME/bin && cp ./aws-iam-authenticator $HOME/bin/aws-iam-authenticator && export PATH=$PATH:$HOME/bin
+              echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+              aws-iam-authenticator -i eks-cluster token
+              aws eks --region us-east-1 update-kubeconfig --name eks-cluster
+              curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+              chmod +x ./kubectl
+              mv ./kubectl /usr/local/bin/kubectl
+              kubectl version --client
+              kubectl get pods --all-namespaces
+              cd k8s
+              kubectl apply -f deployment.yaml
+         - run:
+            name: test
+            command: |
+              pwd
+              ls -latrh
+
+workflows:
+  commit:
+    jobs:
+      - build
+      - aws-ecr/build-and-push-image:
+          account-url: AWS_ECR_ACCOUNT_URL
+          dockerfile: Dockerfile
+          path: ./app
+          repo: django
+          tag: 'latest,$CIRCLE_SHA1'
+      - deploy:
+          requires:
+            - aws-ecr/build-and-push-image
