@@ -33,7 +33,7 @@ jobs:
     steps:
          - checkout
          - run:
-            name: CD 
+            name: Deploy deployment 
             command: |
               curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/aws-iam-authenticator
               chmod 777 ./aws-iam-authenticator
@@ -48,16 +48,8 @@ jobs:
               kubectl get pods --all-namespaces
               kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/rbac-role.yaml
               cd k8s
-              kubectl apply -f rbac-role.yaml
-              kubectl apply -f alb-ingress-controller.yaml
-              kubectl logs -n kube-system $(kubectl get po -n kube-system | egrep -o alb-ingress[a-zA-Z0-9-]+)
-              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-namespace.yaml
-              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-deployment.yaml
-              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-service.yaml
-              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-ingress.yaml
-              sleep 10
-              kubectl get ingress/2048-ingress -n 2048-game
               kubectl apply -f deployment.yaml
+              kubectl apply -f service.yaml
               kubectl rollout restart deployment
          - run:
             name: test
