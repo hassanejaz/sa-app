@@ -1,4 +1,4 @@
-# Django App
+## Django App
 
 This is a Django Hello World app. It contains a simple html page with an image being picked up from the internet proving the networking works fine from inside the pod and onto the internet via nat gateway > internet gateway making the application secure.
 
