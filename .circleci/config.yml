@@ -14,26 +14,13 @@ executors:
     docker:
       - image: ovotech/terraform:0.12
 jobs:
-  build:
-    executor: terraform-0_12
-    steps:
-         - checkout
-         - run:
-            name: CD to env
-            command: |
-              pwd
-              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              ./aws/install
-              ls -latrh
-              aws --version
-              
+
   deploy:
     executor: terraform-0_12
     steps:
          - checkout
          - run:
-            name: Deploy deployment 
+            name: Deploying App changes 
             command: |
               curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/aws-iam-authenticator
               chmod 777 ./aws-iam-authenticator
@@ -44,23 +31,15 @@ jobs:
               curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
               chmod +x ./kubectl
               mv ./kubectl /usr/local/bin/kubectl
-              kubectl version --client
               kubectl get pods --all-namespaces
-              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/rbac-role.yaml
               cd k8s
               kubectl apply -f deployment.yaml
               kubectl apply -f service.yaml
               kubectl rollout restart deployment
-         - run:
-            name: test
-            command: |
-              pwd
-              ls -latrh
 
 workflows:
   commit:
     jobs:
-      - build
       - aws-ecr/build-and-push-image:
           account-url: AWS_ECR_ACCOUNT_URL
           dockerfile: Dockerfile
