@@ -46,7 +46,17 @@ jobs:
               mv ./kubectl /usr/local/bin/kubectl
               kubectl version --client
               kubectl get pods --all-namespaces
+              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/rbac-role.yaml
               cd k8s
+              kubectl apply -f rbac-role.yaml
+              kubectl apply -f alb-ingress-controller.yaml
+              kubectl logs -n kube-system $(kubectl get po -n kube-system | egrep -o alb-ingress[a-zA-Z0-9-]+)
+              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-namespace.yaml
+              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-deployment.yaml
+              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-service.yaml
+              kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.1.4/docs/examples/2048/2048-ingress.yaml
+              sleep 10
+              kubectl get ingress/2048-ingress -n 2048-game
               kubectl apply -f deployment.yaml
               kubectl rollout restart deployment
          - run:
